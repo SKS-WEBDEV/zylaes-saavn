@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { apiReference } from '@scalar/hono-api-reference'
-import { botBlocker, globalRateLimit, ipBlocker, requestValidator, searchRateLimit } from '#common/middleware'
+import { apiKey, botBlocker, globalRateLimit, ipBlocker, requestValidator, searchRateLimit } from '#common/middleware'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { prettyJSON } from 'hono/pretty-json'
@@ -32,6 +32,7 @@ export class App {
 
   private initializeGlobalMiddlewares() {
     this.app.use('*', ipBlocker)
+    this.app.use('*', apiKey)
     this.app.use('*', botBlocker)
     this.app.use('/api/*', globalRateLimit)
     this.app.use('/api/search/*', searchRateLimit)

@@ -1,3 +1,4 @@
+import { getRequestApiKey } from './api-key.middleware'
 import type { MiddlewareHandler } from 'hono/types'
 
 const BLOCKED_UA_PATTERNS = [
@@ -72,9 +73,13 @@ const BLOCKED_UA_PATTERNS = [
 const BLOCKED_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
 
 export const botBlocker: MiddlewareHandler = async (c, next) => {
+  if (c.req.method === 'OPTIONS') return next()
+
   if (BLOCKED_METHODS.has(c.req.method)) {
     return c.json({ success: false, message: 'Method not allowed' }, 405)
   }
+
+  if (getRequestApiKey(c)) return next()
 
   const ua = c.req.header('user-agent') || ''
 
