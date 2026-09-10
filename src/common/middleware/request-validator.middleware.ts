@@ -43,6 +43,8 @@ function getClientIp(headers: Headers): string {
 }
 
 export const requestValidator: MiddlewareHandler = async (c, next) => {
+  if (c.req.method === 'OPTIONS') return next()
+
   const url = new URL(c.req.url)
   const path = url.pathname
 
