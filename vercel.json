@@ -1,11 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "(.*)", "destination": "/api" }],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
+  ],
   "regions": ["bom1"],
   "outputDirectory": "dist",
   "headers": [
     {
-      "source": "(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -13,7 +15,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "*"
+          "value": "Content-Type, User-Agent"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -24,12 +26,37 @@
           "value": "s-maxage=300, stale-while-revalidate"
         },
         {
-          "key": "Author",
-          "value": "Sumit Kolhe"
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
         },
         {
-          "key": "Github",
-          "value": "https://github.com/sumitkolhe/jiosaavn-api"
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
         }
       ]
     }
