@@ -49,8 +49,11 @@ export const requestValidator: MiddlewareHandler = async (c, next) => {
   if (path.startsWith('/api/')) {
     const fullPath = path
 
+    // Only enforce required query params on the exact routes that need them.
+    // Path-param sub-routes (/api/songs/{id}, /api/artists/{id}/songs, ...)
+    // carry their identifier in the path, so they must not be rejected.
     for (const [route, requiredParams] of Object.entries(API_ROUTES_WITH_REQUIRED_PARAMS)) {
-      if (fullPath === route || fullPath.startsWith(`${route}/`)) {
+      if (fullPath === route) {
         const hasAnyParam = requiredParams.some((param) => url.searchParams.has(param) && url.searchParams.get(param))
         if (!hasAnyParam) {
           return c.json(
@@ -66,12 +69,24 @@ export const requestValidator: MiddlewareHandler = async (c, next) => {
   }
 
   const rawUrl = c.req.url
-  for (const pattern of SUSPICIOUS_PATTERNS) {
-    if (pattern.test(rawUrl)) {
-      const ip = getClientIp(c.req.raw.headers)
-      console.warn(`[SECURITY] Blocked suspicious request from ${ip}: ${path}`)
-      return c.json({ success: false, message: 'Bad request' }, 400)
-    }
+
+  // Attackers URL-encode payloads (e.g. %20, %3C, %2F), so raw patterns miss them.
+  // Also inspect the percent-decoded URL. Malformed encoding is itself rejected.
+  let decodedUrl: string
+  try {
+    decodedUrl = decodeURIComponent(rawUrl)
+  } catch {
+    const ip = getClientIp(c.req.raw.headers)
+    console.warn(`[SECURITY] Blocked malformed URL from ${ip}: ${path}`)
+    return c.json({ success: false, message: 'Bad request' }, 400)
+  }
+
+  const isSuspicious = (input: string) => SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(input))
+
+  if (isSuspicious(rawUrl) || isSuspicious(decodedUrl)) {
+    const ip = getClientIp(c.req.raw.headers)
+    console.warn(`[SECURITY] Blocked suspicious request from ${ip}: ${path}`)
+    return c.json({ success: false, message: 'Bad request' }, 400)
   }
 
   const body = await c.req.raw
